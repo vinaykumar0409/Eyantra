@@ -133,7 +133,7 @@ class Edrone():
         self.setpoint_cmd[0] = msg.rcRoll
         self.setpoint_cmd[1] = msg.rcPitch
         self.setpoint_cmd[2] = msg.rcYaw
-        self.out_throt=512.0
+        self.out_throt=1.024*msg.rcThrottle-1024
         # ----------------- ----------------------------------------------------------------------------------------------
 
     # Callback function for /pid_tuning_roll
@@ -208,9 +208,10 @@ class Edrone():
 
         
         # Also convert the range of 1000 to 2000 to 0 to 1024 for throttle here itslef
-        #self.out_throt=1.024*self.out_throt-102.4
+       
 
         #
+        print(self.out_throt)
         self.pwm_cmd.prop1 = self.out_throt+self.out_roll+self.out_pitch+self.out_yaw
         self.pwm_cmd.prop2 = self.out_throt-self.out_roll+self.out_pitch-self.out_yaw
         self.pwm_cmd.prop3 = self.out_throt+self.out_roll-self.out_pitch-self.out_yaw
@@ -245,6 +246,7 @@ class Edrone():
             self.pwm_cmd.prop4 = self.min_values[3]
 
         self.pwm_pub.publish(self.pwm_cmd)
+        #self.out_throt=0
 
 
 if __name__ == '__main__':
