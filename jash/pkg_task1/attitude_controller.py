@@ -77,7 +77,7 @@ class Edrone():
         #
         # ----------------------------------------------------------------------------------------------------------
         #jash
-		self.prev_values = [0,0,0]
+		self.prev_error = [0,0,0]
         self.max_values = [1024, 1024, 1024, 1024]
         self.min_values = [0, 0, 0, 0]
         #jash
@@ -176,6 +176,8 @@ class Edrone():
         timeChange = (now - self.last_time)
    		if(timeChange>=self.sample_time):
    			error=[0,0,0]
+   			error_prop=[0,0,0]
+   			error_der=[0,0,0]
 	        # Converting quaternion to euler angles
 	        (self.drone_orientation_euler[0], self.drone_orientation_euler[1], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion([self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
 
@@ -189,21 +191,21 @@ class Edrone():
 	        error[2] = self.setpoint_euler[2] - self.drone_orientation_euler[2]
 	        
 	        error_prop[0]=error[0]
-	        error_der[0]=error[0]-prev_error[0]
+	        error_der[0]=error[0]-self.prev_error[0]
 	        self.error_sum[0]+=error[0]
 	        
 	        error_prop[1]=error[1]
-	        error_der[1]=error[1]-prev_error[1]
+	        error_der[1]=error[1]-self.prev_error[1]
 	        self.error_sum[1]+=error[1]
 
 	        error_prop[2]=error[2]
-	        error_der[2]=error[2]-prev_error[2]
+	        error_der[2]=error[2]-self.prev_error[2]
 	        self.error_sum[2]+=error[2]
 
 	        #############################################
 	        self.out_roll=self.Kp[0]*error_prop[0]+self.Ki[0]*error_sum[0]+self.Kd[0]*error_der[0]
-	        self.out_pitch=self.Kp[1]*error_prop[1]+self.Ki[1]*error_sum[0]+self.Kd[0]*error_der[1]
-	        self.out_yaw=self.Kp[2]*error_prop[2]+self.Ki[2]*error_sum[0]+self.Kd[0]*error_der[2]
+	        self.out_pitch=self.Kp[1]*error_prop[1]+self.Ki[1]*error_sum[1]+self.Kd[1]*error_der[1]
+	        self.out_yaw=self.Kp[2]*error_prop[2]+self.Ki[2]*error_sum[2]+self.Kd[2]*error_der[2]
 
 	        
 	        # Also convert the range of 1000 to 2000 to 0 to 1024 for throttle here itslef
