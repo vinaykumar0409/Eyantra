@@ -57,7 +57,6 @@ class Edrone():
 		# float64 prop3
 		# float64 prop4
 
-
         self.pwm_cmd = prop_speed()
         self.pwm_cmd.prop1 = 0.0
         self.pwm_cmd.prop2 = 0.0
@@ -174,10 +173,10 @@ class Edrone():
         #   8. Update previous errors.eg: self.prev_error[1] = error[1] where index 1 corresponds to that of pitch (eg)
         #   9. Add error_sum to use for integral component
         now=time.now()
-        timeChange = (now - self.last_time);
+        timeChange = (now - self.last_time)
    		if(timeChange>=self.sample_time):
 	        # Converting quaternion to euler angles
-	        (self.drone_orientation_euler[0], self.drone_orientation_euler[1], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion([self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]]
+	        (self.drone_orientation_euler[0], self.drone_orientation_euler[1], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion([self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
 
 	        # Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll axis
 	        self.setpoint_euler[0] = self.setpoint_cmd[0] * 0.02 - 30
