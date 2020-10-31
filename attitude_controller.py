@@ -86,8 +86,8 @@ class Edrone():
         self.out_yaw=0
         self.out_throt=0
         # # This is the sample time in which you need to run pid. Choose any time which you seem fit. Remember the stimulation step time is 50 ms
-        self.sample_time = 0.060  # in seconds
-        self.last_time=time.time()
+        self.sample_time = 30  # in seconds
+        #self.last_time=time.time()
 
         # Publishing /edrone/pwm, /roll_error, /pitch_error, /yaw_error
         self.pwm_pub = rospy.Publisher('/edrone/pwm', prop_speed, queue_size=1)
@@ -133,25 +133,25 @@ class Edrone():
         self.setpoint_cmd[0] = msg.rcRoll
         self.setpoint_cmd[1] = msg.rcPitch
         self.setpoint_cmd[2] = msg.rcYaw
-        self.out_throt=msg.rcThrottle
+        self.out_throt=1.024*msg.rcThrottle-1024
         # ----------------- ----------------------------------------------------------------------------------------------
 
     # Callback function for /pid_tuning_roll
     # This function gets executed each time when /tune_pid publishes /pid_tuning_roll
     def roll_set_pid(self, roll):
-        self.Kp[0] = roll.Kp * 0.06  # This is just for an example. You can change the ratio/fraction value accordingly
-        self.Ki[0] = roll.Ki * 0.008*self.sample_time
-        self.Kd[0] = roll.Kd * 0.3/self.sample_time
+        self.Kp[0] = roll.Kp*0.06  # This is just for an example. You can change the ratio/fraction value accordingly
+        self.Ki[0] = roll.Ki*0.008 *self.sample_time
+        self.Kd[0] = roll.Kd *0.3/self.sample_time
 
     def pitch_set_pid(self, pitch):
-        self.Kp[1] = pitch.Kp * 0.06  # This is just for an example. You can change the ratio/fraction value accordingly
+        self.Kp[1] = pitch.Kp *0.06  # This is just for an example. You can change the ratio/fraction value accordingly
         self.Ki[1] = pitch.Ki * 0.008*self.sample_time
-        self.Kd[1] = pitch.Kd * 0.3/self.sample_time
+        self.Kd[1] = pitch.Kd *0.3/self.sample_time
 
     def yaw_set_pid(self, yaw):
-        self.Kp[2] = yaw.Kp * 0.06  # This is just for an example. You can change the ratio/fraction value accordingly
-        self.Ki[2] = yaw.Ki * 0.008*self.sample_time
-        self.Kd[2] = yaw.Kd * 0.3/self.sample_time
+        self.Kp[2] = yaw.Kp*0.06   # This is just for an example. You can change the ratio/fraction value accordingly
+        self.Ki[2] = yaw.Ki *0.008*self.sample_time
+        self.Kd[2] = yaw.Kd *0.3/self.sample_time
     # ----------------------------Define callback function like roll_set_pid to tune pitch, yaw--------------
 
     # ----------------------------------------------------------------------------------------------------------------------
@@ -171,80 +171,82 @@ class Edrone():
         #                                                                                                                                      self.pwm_cmd.prop1 = self.max_values[1]
         #   8. Update previous errors.eg: self.prev_error[1] = error[1] where index 1 corresponds to that of pitch (eg)
         #   9. Add error_sum to use for integral component
-        now=time.time()
-        timeChange = (now - self.last_time)
-        if(timeChange>=self.sample_time):
-            # Converting quaternion to euler angles
-            (self.drone_orientation_euler[0], self.drone_orientation_euler[1], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion([self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
+        #now=time.time()
+        #timeChange = (now - self.last_time)
+        #if(timeChange>=self.sample_time):
+        # Converting quaternion to euler angles
+        (self.drone_orientation_euler[0], self.drone_orientation_euler[1], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion([self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
 
-            # Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll axis
-            self.setpoint_euler[0] = self.setpoint_cmd[0] * 0.02 - 30
-            self.setpoint_euler[1] = self.setpoint_cmd[1] * 0.02 - 30
-            self.setpoint_euler[2] = self.setpoint_cmd[2] * 0.02 - 30
-            # Complete the equations for pitch and yaw axis
-            error=[0,0,0]
-            error_prop=[0,0,0]
-            error_der=[0,0,0]
-            error[0] = self.setpoint_euler[0] - self.drone_orientation_euler[0]
-            error[1] = self.setpoint_euler[1] - self.drone_orientation_euler[1]
-            error[2] = self.setpoint_euler[2] - self.drone_orientation_euler[2]
-            
-            error_prop[0]=error[0]
-            error_der[0]=error[0]-self.prev_error[0]
-            self.error_sum[0]+=error[0]
-            
-            error_prop[1]=error[1]
-            error_der[1]=error[1]-self.prev_error[1]
-            self.error_sum[1]+=error[1]
+        # Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll axis
+        self.setpoint_euler[0] = self.setpoint_cmd[0] * 0.02 - 30
+        self.setpoint_euler[1] = self.setpoint_cmd[1] * 0.02 - 30
+        self.setpoint_euler[2] = self.setpoint_cmd[2] * 0.02 - 30
+        # Complete the equations for pitch and yaw axis
+        error=[0,0,0]
+        error_prop=[0,0,0]
+        error_der=[0,0,0]
+        error[0] = self.setpoint_euler[0] - self.drone_orientation_euler[0]
+        error[1] = self.setpoint_euler[1] - self.drone_orientation_euler[1]
+        error[2] = self.setpoint_euler[2] - self.drone_orientation_euler[2]
+        
+        error_prop[0]=error[0]
+        error_der[0]=error[0]-self.prev_error[0]
+        self.error_sum[0]+=error[0]
+        
+        error_prop[1]=error[1]
+        error_der[1]=error[1]-self.prev_error[1]
+        self.error_sum[1]+=error[1]
 
-            error_prop[2]=error[2]
-            error_der[2]=error[2]-self.prev_error[2]
-            self.error_sum[2]+=error[2]
+        error_prop[2]=error[2]
+        error_der[2]=error[2]-self.prev_error[2]
+        self.error_sum[2]+=error[2]
 
-            #############################################
-            self.out_roll=self.Kp[0]*error_prop[0]+self.Ki[0]*self.error_sum[0]+self.Kd[0]*error_der[0]
-            self.out_pitch=self.Kp[1]*error_prop[1]+self.Ki[1]*self.error_sum[1]+self.Kd[1]*error_der[1]
-            self.out_yaw=self.Kp[2]*error_prop[2]+self.Ki[2]*self.error_sum[2]+self.Kd[2]*error_der[2]
+        #############################################
+        self.out_roll=self.Kp[0]*error_prop[0]+self.Ki[0]*self.error_sum[0]+self.Kd[0]*error_der[0]
+        self.out_pitch=self.Kp[1]*error_prop[1]+self.Ki[1]*self.error_sum[1]+self.Kd[1]*error_der[1]
+        self.out_yaw=self.Kp[2]*error_prop[2]+self.Ki[2]*self.error_sum[2]+self.Kd[2]*error_der[2]
 
-            
-            # Also convert the range of 1000 to 2000 to 0 to 1024 for throttle here itslef
-            self.out_throt=1.024*self.out_throt-102.4
+        
+        # Also convert the range of 1000 to 2000 to 0 to 1024 for throttle here itslef
+       
+        self.pwm_cmd.prop1 = self.out_throt+self.out_roll+self.out_pitch+self.out_yaw
+        self.pwm_cmd.prop2 = self.out_throt-self.out_roll+self.out_pitch-self.out_yaw
+        self.pwm_cmd.prop3 = self.out_throt+self.out_roll-self.out_pitch-self.out_yaw
+        self.pwm_cmd.prop4 = self.out_throt-self.out_roll-self.out_pitch+self.out_yaw
 
-            #
-            self.pwm_cmd.prop1 = self.out_throt+self.out_roll+self.out_pitch+self.out_yaw
-            self.pwm_cmd.prop2 = self.out_throt-self.out_roll+self.out_pitch-self.out_yaw
-            self.pwm_cmd.prop3 = self.out_throt+self.out_roll-self.out_pitch-self.out_yaw
-            self.pwm_cmd.prop4 = self.out_throt-self.out_roll-self.out_pitch+self.out_yaw
+        self.prev_error[0] = error[0]
+        self.prev_error[1] = error[1]
+        self.prev_error[2] = error[2]
+        #self.last_time=now
+        if self.pwm_cmd.prop1 > self.max_values[0]:                                                                                                                               
+            self.pwm_cmd.prop1 = self.max_values[0]
 
-            self.prev_error[0] = error[0]
-            self.prev_error[1] = error[1]
-            self.prev_error[2] = error[2]
-            self.last_time=now
-            if self.pwm_cmd.prop1 > self.max_values[0]:                                                                                                                               
-                self.pwm_cmd.prop1 = self.max_values[0]
+        if self.pwm_cmd.prop2 > self.max_values[1]:                                                                                                                               
+            self.pwm_cmd.prop2 = self.max_values[1]
 
-            if self.pwm_cmd.prop2 > self.max_values[1]:                                                                                                                               
-                self.pwm_cmd.prop2 = self.max_values[1]
+        if self.pwm_cmd.prop3 > self.max_values[2]:                                                                                                                               
+            self.pwm_cmd.prop3 = self.max_values[2]
 
-            if self.pwm_cmd.prop3 > self.max_values[2]:                                                                                                                               
-                self.pwm_cmd.prop3 = self.max_values[2]
+        if self.pwm_cmd.prop4 > self.max_values[3]:                                                                                                                               
+            self.pwm_cmd.prop4 = self.max_values[3]
+        #for minumum vLUES
+        if self.pwm_cmd.prop1 < self.min_values[0]:                                                                                                                               
+            self.pwm_cmd.prop1 = self.min_values[0]
 
-            if self.pwm_cmd.prop4 > self.max_values[3]:                                                                                                                               
-                self.pwm_cmd.prop4 = self.max_values[3]
-            #for minumum vLUES
-            if self.pwm_cmd.prop1 < self.min_values[0]:                                                                                                                               
-                self.pwm_cmd.prop1 = self.min_values[0]
+        if self.pwm_cmd.prop2 < self.min_values[1]:                                                                                                                               
+            self.pwm_cmd.prop2 = self.min_values[1]
 
-            if self.pwm_cmd.prop2 < self.min_values[1]:                                                                                                                               
-                self.pwm_cmd.prop2 = self.min_values[1]
+        if self.pwm_cmd.prop3 < self.min_values[2]:                                                                                                                               
+            self.pwm_cmd.prop3 = self.min_values[2]
 
-            if self.pwm_cmd.prop3 < self.min_values[2]:                                                                                                                               
-                self.pwm_cmd.prop3 = self.min_values[2]
+        if self.pwm_cmd.prop4 < self.min_values[3]:                                                                                                                               
+            self.pwm_cmd.prop4 = self.min_values[3]
 
-            if self.pwm_cmd.prop4 < self.min_values[3]:                                                                                                                               
-                self.pwm_cmd.prop4 = self.min_values[3]
-
-            self.pwm_pub.publish(self.pwm_cmd)
+        self.pwm_pub.publish(self.pwm_cmd)
+        self.roll_error.publish(error[0])
+        self.yaw_error.publish(error[2])
+        self.pitch_error.publish(error[1])
+        #self.out_throt=0
 
 
 if __name__ == '__main__':
