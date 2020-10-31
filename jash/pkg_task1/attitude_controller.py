@@ -82,7 +82,11 @@ class Edrone():
         self.max_values = [1024, 1024, 1024, 1024]
         self.min_values = [0, 0, 0, 0]
         #jash
-
+        self.error_sum=[0,0,0]
+        self.out_roll=0
+        self.out_pitch=0
+        self.out_yaw=0
+        self.out_throt=0
         # # This is the sample time in which you need to run pid. Choose any time which you seem fit. Remember the stimulation step time is 50 ms
         self.sample_time = 0.060  # in seconds
 
@@ -104,7 +108,7 @@ class Edrone():
         rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
         rospy.Subscriber('/pid_tuning_yaw', PidTune, self.yaw_set_pid)
         
-        
+
         # ------------------------------------------------------------------------------------------------------------
 
     # Imu callback function
@@ -120,13 +124,18 @@ class Edrone():
     def imu_callback(self, msg):
 
         self.drone_orientation_quaternion[0] = msg.orientation.x
-
+        self.drone_orientation_quaternion[1] = msg.orientation.y
+        self.drone_orientation_quaternion[2] = msg.orientation.z
+        self.drone_orientation_quaternion[3] = msg.orientation.w
+        
         # --------------------Set the remaining co-ordinates of the drone from msg----------------------------------------------
 
     def drone_command_callback(self, msg):
         self.setpoint_cmd[0] = msg.rcRoll
-
-        # ---------------------------------------------------------------------------------------------------------------
+        self.setpoint_cmd[1] = msg.rcPitch
+		self.setpoint_cmd[2] = msg.rcYaw
+		self.out_throt=msg.rcThrottle
+        # -----------------	----------------------------------------------------------------------------------------------
 
     # Callback function for /pid_tuning_roll
     # This function gets executed each time when /tune_pid publishes /pid_tuning_roll
@@ -169,14 +178,39 @@ class Edrone():
 
         # Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll axis
         self.setpoint_euler[0] = self.setpoint_cmd[0] * 0.02 - 30
-
+        self.setpoint_euler[1] = self.setpoint_cmd[1] * 0.02 - 30
+        self.setpoint_euler[2] = self.setpoint_cmd[2] * 0.02 - 30
         # Complete the equations for pitch and yaw axis
+        error[0] = self.setpoint_euler[0] - self.drone_orientation_euler[0]
+        error[1] = self.setpoint_euler[1] - self.drone_orientation_euler[1]
+        error[2] = self.setpoint_euler[2] - self.drone_orientation_euler[2]
+        
+        error_prop[0]=error[0]
+        error_der[0]=error[0]-prev_error[0]
+        self.error_sum[0]+=error[0]
+        
+        error_prop[1]=error[1]
+        error_der[1]=error[1]-prev_error[1]
+        self.error_sum[1]+=error[1]
 
+        error_prop[2]=error[2]
+        error_der[2]=error[2]-prev_error[2]
+        self.error_sum[2]+=error[2]
+
+        #############################################
+        self.out_roll=self.Kp[0]*error_prop[0]+self.Ki[0]*error_sum[0]+self.Kd*error_der[0]
+        self.out_pitch=self.Kp[1]*error_prop[1]+self.Ki[1]*error_sum[0]+self.Kd*error_der[1]
+        self.out_yaw=self.Kp[2]*error_prop[2]+self.Ki[2]*error_sum[0]+self.Kd*error_der[2]
+
+        
         # Also convert the range of 1000 to 2000 to 0 to 1024 for throttle here itslef
+        self.out_throt=1.024*self.out_throt-102.4
 
         #
-        #
-        #
+        self.pwm_cmd.prop1 = out_throt+self.out_roll+self.out_pitch+self.out_yaw
+        self.pwm_cmd.prop2 = out_throt-self.out_roll+self.out_pitch-self.out_yaw
+        self.pwm_cmd.prop3 = out_throt+self.out_roll-self.out_pitch-self.out_yaw
+        self.pwm_cmd.prop4 = out_throt-self.out_roll-self.out_pitch+self.out_yaw
         #
         #
         #
