@@ -172,9 +172,10 @@ class Edrone():
         #                                                                                                                                      self.pwm_cmd.prop1 = self.max_values[1]
         #   8. Update previous errors.eg: self.prev_error[1] = error[1] where index 1 corresponds to that of pitch (eg)
         #   9. Add error_sum to use for integral component
-        now=time.now()
+        now=time.time()
         timeChange = (now - self.last_time)
    		if(timeChange>=self.sample_time):
+   			error=[0,0,0]
 	        # Converting quaternion to euler angles
 	        (self.drone_orientation_euler[0], self.drone_orientation_euler[1], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion([self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
 
