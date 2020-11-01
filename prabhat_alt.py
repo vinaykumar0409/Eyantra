@@ -55,9 +55,9 @@ class Edrone():
 
         # initial setting of Kp, Kd and ki for [roll, pitch, yaw]. eg: self.Kp[2] corresponds to Kp value in yaw axis
         # after tuning and computing corresponding PID parameters, change the parameters
-        self.Kp = [5.22, 4, 0.0]
+        self.Kp = [5.22, 4, 200]
         self.Ki = [0.0, 0.0, 0.0]
-        self.Kd = [1454 , 1382.0, 0.0]
+        self.Kd = [1454 , 1382.0, 3000]
         self.error = [0.0,0.0,0.0]  #errors in each axis
         self.prev_error = [0.0, 0.0, 0.0] #previous errors in each axis
       #  self.max_values = [256, 256, 256, 256]  #max values
@@ -114,9 +114,9 @@ class Edrone():
         self.Kd[1] = pitch.Kd * 0.3
     
     def yaw_set_pid(self, yaw):
-        self.Kp[2] = yaw.Kp * 0.06  # This is just for an example. You can change the ratio/fraction value accordingly
-        self.Ki[2] = yaw.Ki * 0.008
-        self.Kd[2] = yaw.Kd * 0.3
+        self.Kp[2] = yaw.Kp * 1  # This is just for an example. You can change the ratio/fraction value accordingly
+        self.Ki[2] = yaw.Ki * 0.08
+        self.Kd[2] = yaw.Kd * 1.8
 
     def pid(self):
         # Converting quaternion to euler angles
@@ -167,10 +167,10 @@ class Edrone():
 
         #print(self.out_roll)
 
-        self.pwm_cmd.prop1 = 512 - self.out_roll + self.out_pitch + self.out_yaw 
-        self.pwm_cmd.prop2 = 512 - self.out_roll - self.out_pitch - self.out_yaw 
-        self.pwm_cmd.prop3 = 512 + self.out_roll - self.out_pitch + self.out_yaw 
-        self.pwm_cmd.prop4 = 512 + self.out_roll + self.out_pitch - self.out_yaw 
+        self.pwm_cmd.prop1 = 512 - self.out_roll + self.out_pitch - self.out_yaw 
+        self.pwm_cmd.prop2 = 512 - self.out_roll - self.out_pitch + self.out_yaw 
+        self.pwm_cmd.prop3 = 512 + self.out_roll - self.out_pitch - self.out_yaw 
+        self.pwm_cmd.prop4 = 512 + self.out_roll + self.out_pitch + self.out_yaw 
 
         if self.pwm_cmd.prop1 > 1023:
             self.pwm_cmd.prop1 = 1023
@@ -205,7 +205,7 @@ class Edrone():
         self.roll_pub.publish(self.error[0])
         self.pitch_pub.publish(self.error[1])
         self.yaw_pub.publish(self.error[2])
-        print(self.Kd[0])
+        print(self.Kd[2])
         
 if __name__ == '__main__':
 
