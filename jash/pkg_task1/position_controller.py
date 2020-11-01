@@ -59,7 +59,7 @@ class Edrone():
       #  self.min_values = [0, 0, 0, 0]              #min values
         self.fix_lat = 0
         self.fix_lon = 0
-        self.fix_alt = 0.50
+        self.fix_alt = 3
         self.out_roll = 0.0
         self.out_pitch = 0.0
         self.out_throttle = 0.0
@@ -97,7 +97,7 @@ class Edrone():
     	self.lat=msg.latitude
     	self.lon=msg.longitude
     	self.alt=msg.altitude
-    	print(1,self.lat,self.lon,self.alt)
+    	print(self.alt)
     # Imu callback function
 
     # def imu_callback(self, msg):
@@ -116,19 +116,20 @@ class Edrone():
     # # Callback function for /pid_tuning_roll
     # # This function gets executed each time when /tune_pid publishes /pid_tuning_roll
     def roll_set_pid(self, roll):
-        self.Kp[0] = roll.Kp * 0.06  # This is just for an example. You can change the ratio/fraction value accordingly
+        self.Kp[0] = roll.Kp * 0.6  # This is just for an example. You can change the ratio/fraction value accordingly
         self.Ki[0] = roll.Ki * 0.008
-        self.Kd[0] = roll.Kd * 0.3
+        self.Kd[0] = roll.Kd * 0.6
     
     def pitch_set_pid(self, pitch):
-        self.Kp[1] = pitch.Kp * 0.06  # This is just for an example. You can change the ratio/fraction value accordingly
+        self.Kp[1] = pitch.Kp * 0.6  # This is just for an example. You can change the ratio/fraction value accordingly
         self.Ki[1] = pitch.Ki * 0.008
         self.Kd[1] = pitch.Kd * 0.3
     
     def throttle_set_pid(self, throttle):
-        self.Kp[2] = yaw.Kp * 0.06  # This is just for an example. You can change the ratio/fraction value accordingly
-        self.Ki[2] = yaw.Ki * 0.008
-        self.Kd[2] = yaw.Kd * 0.3
+        self.Kp[2] = throttle.Kp * 10  # This is just for an example. You can change the ratio/fraction value accordingly
+        self.Ki[2] = throttle.Ki * 1
+        self.Kd[2] = throttle.Kd * 10
+        print(Kp[2],"booo")
 
     def pid(self):
       #   # Converting quaternion to euler angles
@@ -190,7 +191,7 @@ class Edrone():
         if self.out_pitch < 1000:
             self.out_pitch = 1000
         
-
+        print(self.out_throttle,"yes")
         if self.out_throttle < 1000:
             self.out_throttle= 1000
         self.drone_cmd.rcRoll=1500.0
