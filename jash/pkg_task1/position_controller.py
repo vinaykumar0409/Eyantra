@@ -5,7 +5,6 @@ This python file runs a ROS-node of name attitude_control which controls the rol
 This node publishes and subsribes the following topics:
         PUBLICATIONS				SUBSCRIPTIONS
 /edrone/drone_command			/edrone/gps
-
 Rather than using different variables, use list. eg : self.setpoint = [1,2,3], where index corresponds to x,y,z ...rather than defining self.x_setpoint = 1, self.y_setpoint = 2
 CODE MODULARITY AND TECHNIQUES MENTIONED LIKE THIS WILL HELP YOU GAINING MORE MARKS WHILE CODE EVALUATION.
 '''
@@ -177,29 +176,26 @@ class Edrone():
       #   self.pwm_cmd.prop3 = 512 + self.out_roll - self.out_pitch - self.out_yaw 
       #   self.pwm_cmd.prop4 = 512 + self.out_roll + self.out_pitch + self.out_yaw 
 
-      #   if self.pwm_cmd.prop1 > 1023:
-      #       self.pwm_cmd.prop1 = 1023
+        if self.out_roll > 2000:
+            self.out_roll= 2000
         
-      #   if self.pwm_cmd.prop1 < 0:
-      #       self.pwm_cmd.prop1 = 0
+        if self.out_pitch > 2000:
+            self.out_pitch = 2000
+        
 
-      #   if self.pwm_cmd.prop2 > 1023:
-      #       self.pwm_cmd.prop2 = 1023
+        if self.out_throttle > 2000:
+            self.out_throttle= 2000
         
-      #   if self.pwm_cmd.prop2 < 0:
-      #       self.pwm_cmd.prop2 = 0
+        
+        if self.out_roll < 1000:
+            self.out_roll= 1000
+        
+        if self.out_pitch < 1000:
+            self.out_pitch = 1000
+        
 
-      #   if self.pwm_cmd.prop3 > 1023:
-      #       self.pwm_cmd.prop3 = 1023
-        
-      #   if self.pwm_cmd.prop3 < 0:
-      #       self.pwm_cmd.prop3 = 0
-
-      #   if self.pwm_cmd.prop4 > 1023:
-      #       self.pwm_cmd.prop4 = 1023
-        
-      #   if self.pwm_cmd.prop4 < 0:
-      #       self.pwm_cmd.prop4 = 0
+        if self.out_throttle < 1000:
+            self.out_throttle= 1000
 
       # #  print(self.pwm_cmd.prop1)
       #  # print(self.pwm_cmd.prop2)
