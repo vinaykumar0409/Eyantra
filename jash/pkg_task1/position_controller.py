@@ -59,7 +59,7 @@ class Edrone():
       #  self.min_values = [0, 0, 0, 0]              #min values
         self.fix_lat = 0
         self.fix_lon = 0
-        self.fix_alt = 3
+        self.fix_alt = 10.0
         self.out_roll = 0.0
         self.out_pitch = 0.0
         self.out_throttle = 0.0
@@ -89,7 +89,7 @@ class Edrone():
         rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
       # #  rospy.Subscriber('/pid_tuning_altitude', PidTune, self.altitude_set_pid)
         rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
-        rospy.Subscriber('/pid_tuning_throttle', PidTune, self.throttle_set_pid)
+        rospy.Subscriber('/pid_tuning_altitude', PidTune, self.throttle_set_pid)
 
         rospy.Subscriber('/edrone/gps', NavSatFix , self.gps_set_pid)
       	
@@ -126,9 +126,9 @@ class Edrone():
         self.Kd[1] = pitch.Kd * 0.3
     
     def throttle_set_pid(self, throttle):
-        self.Kp[2] = throttle.Kp * 10  # This is just for an example. You can change the ratio/fraction value accordingly
-        self.Ki[2] = throttle.Ki * 1
-        self.Kd[2] = throttle.Kd * 10
+        self.Kp[2] = throttle.Kp * 0.1  # This is just for an example. You can change the ratio/fraction value accordingly
+        self.Ki[2] = throttle.Ki * 0.008
+        self.Kd[2] = throttle.Kd * 20
         print(Kp[2],"booo")
 
     def pid(self):
