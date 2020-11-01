@@ -178,7 +178,7 @@ class Edrone():
         #timeChange = (now - self.last_time)
         #if(timeChange>=self.sample_time):
         # Converting quaternion to euler angles
-        (self.drone_orientation_euler[0], self.drone_orientation_euler[1], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion([self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
+        (self.drone_orientation_euler[1], self.drone_orientation_euler[0], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion([self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
         self.drone_orientation_euler[0]=math.degrees(self.drone_orientation_euler[0])
         self.drone_orientation_euler[1]=math.degrees(self.drone_orientation_euler[1])
         self.drone_orientation_euler[2]=math.degrees(self.drone_orientation_euler[2])
