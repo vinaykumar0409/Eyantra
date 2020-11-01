@@ -13,7 +13,7 @@ CODE MODULARITY AND TECHNIQUES MENTIONED LIKE THIS WILL HELP YOU GAINING MORE MA
 
 from vitarana_drone.msg import *
 from pid_tune.msg import PidTune
-from sensor_msgs.msg import Imu
+from sensor_msgs.msg import Imu,NavSatFix
 from std_msgs.msg import Float32
 import rospy
 import time
@@ -57,6 +57,9 @@ class Edrone():
         self.prev_error = [0.0, 0.0, 0.0] #previous errors in each axis
       #  self.max_values = [256, 256, 256, 256]  #max values
       #  self.min_values = [0, 0, 0, 0]              #min values
+        self.fix_lat = 0
+        self.fix_lon = 0
+        self.fix_alt = 0.50
         self.out_roll = 0.0
         self.out_pitch = 0.0
         self.out_throttle = 0.0
@@ -66,6 +69,10 @@ class Edrone():
         self.prev_lon=0.0
         self.prev_alt=0.0
         self.drone_cmd=edrone_cmd()
+        self.lat = 0
+        self.lon = 0
+
+        self.alt = 0
         
         # This is the sample time in which you need to run pid. Choose any time which you seem fit. Remember the stimulation step time is 50 ms
         self.sample_time = 30  # in mseconds
@@ -84,12 +91,13 @@ class Edrone():
         rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
         rospy.Subscriber('/pid_tuning_throttle', PidTune, self.throttle_set_pid)
 
-        rospy.Subscriber('/edrone/gps', sensor_msgs/NavSatFix , self.gps_set_pid)
+        rospy.Subscriber('/edrone/gps', NavSatFix , self.gps_set_pid)
       	
     def gps_set_pid(self,msg):
-    	self.lat=msg.lattitude
+    	self.lat=msg.latitude
     	self.lon=msg.longitude
     	self.alt=msg.altitude
+    	print(1,self.lat,self.lon,self.alt)
     # Imu callback function
 
     # def imu_callback(self, msg):
@@ -155,26 +163,15 @@ class Edrone():
         self.errSum[2] = self.errSum[2] + (self.error[2] * self.sample_time)
         self.dErr[2] = (self.error[2] - self.prev_error[2]) / self.sample_time
 
-  
-        #Compute PID Output
         self.out_roll = self.Kp[0] * self.prev_error[0] + self.Ki[0] * self.errSum[0] + self.Kd[0] * self.dErr[0]
         
         self.out_pitch = self.Kp[1] * self.prev_error[1] + self.Ki[1] * self.errSum[1] + self.Kd[1] * self.dErr[1]
   
         self.out_throttle = self.Kp[2] * self.prev_error[2] + self.Ki[2] * self.errSum[2] + self.Kd[2] * self.dErr[2]
-
-        #Remember some variables for next time
         self.prev_error[0]= self.error[0]
         self.prev_error[1]= self.error[1]
         self.prev_error[2]= self.error[2]
 
-
-        #print(self.out_roll)
-
-      #   self.pwm_cmd.prop1 = 512 - self.out_roll + self.out_pitch - self.out_yaw 
-      #   self.pwm_cmd.prop2 = 512 - self.out_roll - self.out_pitch + self.out_yaw 
-      #   self.pwm_cmd.prop3 = 512 + self.out_roll - self.out_pitch - self.out_yaw 
-      #   self.pwm_cmd.prop4 = 512 + self.out_roll + self.out_pitch + self.out_yaw 
 
         if self.out_roll > 2000:
             self.out_roll= 2000
@@ -196,14 +193,8 @@ class Edrone():
 
         if self.out_throttle < 1000:
             self.out_throttle= 1000
-
-      # #  print(self.pwm_cmd.prop1)
-      #  # print(self.pwm_cmd.prop2)
-      #  # print(self.pwm_cmd.prop3)
-      #  # print(self.pwm_cmd.prop4)
-
-        self.drone_cmd.rcRoll=self.out_roll
-        self.drone_cmd.rcPitch=self.out_pitch
+        self.drone_cmd.rcRoll=1500.0
+        self.drone_cmd.rcPitch=1500.0
         self.drone_cmd.rcYaw=1500.0
         self.drone_cmd.rcThrottle=self.out_throttle
 
@@ -211,7 +202,6 @@ class Edrone():
         self.roll_pub.publish(self.error[0])
         self.pitch_pub.publish(self.error[1])
         self.throttle_pub.publish(self.error[2])
-        #print(self.Kd[0])
         
 if __name__ == '__main__':
 
