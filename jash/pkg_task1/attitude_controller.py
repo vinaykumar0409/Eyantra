@@ -24,7 +24,7 @@ from std_msgs.msg import Float32
 import rospy
 import time
 import tf   #basically transforms
-
+import math
 
 class Edrone():
     """docstring for Edrone"""
@@ -142,7 +142,10 @@ class Edrone():
         self.Kp[0] = roll.Kp * 0.06  # This is just for an example. You can change the ratio/fraction value accordingly
         self.Ki[0] = roll.Ki * 0.008*self.sample_time
         self.Kd[0] = roll.Kd * 0.3/self.sample_time
-
+        #self.Kp[0] = roll.Kp   # This is just for an example. You can change the ratio/fraction value accordingly
+        #self.Ki[0] = roll.Ki 
+        #self.Kd[0] = roll.Kd         
+        print("Kp is ",self.Kp[0])
     def pitch_set_pid(self, pitch):
         self.Kp[1] = pitch.Kp * 0.06  # This is just for an example. You can change the ratio/fraction value accordingly
         self.Ki[1] = pitch.Ki * 0.008*self.sample_time
@@ -176,8 +179,16 @@ class Edrone():
         #if(timeChange>=self.sample_time):
         # Converting quaternion to euler angles
         (self.drone_orientation_euler[0], self.drone_orientation_euler[1], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion([self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
+        self.drone_orientation_euler[0]=math.degrees(self.drone_orientation_euler[0])
+        self.drone_orientation_euler[1]=math.degrees(self.drone_orientation_euler[1])
+        self.drone_orientation_euler[2]=math.degrees(self.drone_orientation_euler[2])
+        print("Degree as follows") 
+        print(self.drone_orientation_euler[0])
+        print(self.drone_orientation_euler[1])
+        print(self.drone_orientation_euler[2])
+		#print(" Degree done ")        
+		# Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll axis
 
-        # Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll axis
         self.setpoint_euler[0] = self.setpoint_cmd[0] * 0.02 - 30
         self.setpoint_euler[1] = self.setpoint_cmd[1] * 0.02 - 30
         self.setpoint_euler[2] = self.setpoint_cmd[2] * 0.02 - 30
@@ -205,18 +216,18 @@ class Edrone():
         self.out_roll=self.Kp[0]*error_prop[0]+self.Ki[0]*self.error_sum[0]+self.Kd[0]*error_der[0]
         self.out_pitch=self.Kp[1]*error_prop[1]+self.Ki[1]*self.error_sum[1]+self.Kd[1]*error_der[1]
         self.out_yaw=self.Kp[2]*error_prop[2]+self.Ki[2]*self.error_sum[2]+self.Kd[2]*error_der[2]
-
+        print("Out_Roll is " , self.out_roll)
         
         # Also convert the range of 1000 to 2000 to 0 to 1024 for throttle here itslef
        
 
         #
-        print(self.out_throt)
+        #print(self.out_throt)
         self.pwm_cmd.prop1 = self.out_throt+self.out_roll+self.out_pitch+self.out_yaw
-        self.pwm_cmd.prop2 = self.out_throt-self.out_roll+self.out_pitch-self.out_yaw
-        self.pwm_cmd.prop3 = self.out_throt+self.out_roll-self.out_pitch-self.out_yaw
-        self.pwm_cmd.prop4 = self.out_throt-self.out_roll-self.out_pitch+self.out_yaw
-
+        self.pwm_cmd.prop2 = self.out_throt+self.out_roll-self.out_pitch-self.out_yaw
+        self.pwm_cmd.prop3 = self.out_throt-self.out_roll-self.out_pitch+self.out_yaw
+        self.pwm_cmd.prop4 = self.out_throt-self.out_roll+self.out_pitch-self.out_yaw
+  
         self.prev_error[0] = error[0]
         self.prev_error[1] = error[1]
         self.prev_error[2] = error[2]
@@ -245,7 +256,17 @@ class Edrone():
         if self.pwm_cmd.prop4 < self.min_values[3]:                                                                                                                               
             self.pwm_cmd.prop4 = self.min_values[3]
 
+        print("!st is ")
+        print(self.pwm_cmd.prop1)
+        print(self.pwm_cmd.prop2)
+        print(self.pwm_cmd.prop3)
+        print(self.pwm_cmd.prop4)
+        print("Done")
+        
         self.pwm_pub.publish(self.pwm_cmd)
+        self.roll_error.publish(error[0])
+        self.yaw_error.publish(error[2])
+        self.pitch_error.publish(error[1])
         #self.out_throt=0
 
 
