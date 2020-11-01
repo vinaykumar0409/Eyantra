@@ -50,9 +50,9 @@ class Edrone():
 
         # initial setting of Kp, Kd and ki for [roll, pitch, yaw]. eg: self.Kp[2] corresponds to Kp value in yaw axis
         # after tuning and computing corresponding PID parameters, change the parameters
-        self.Kp = [5.22, 4, 78.6]
-        self.Ki = [0.0, 0.0, 0.0]
-        self.Kd = [1454 , 1382.0, 589.5]
+        self.Kp = [5.22, 4, 4455*0.1]
+        self.Ki = [0.0, 0.0, 6*0.008]
+        self.Kd = [1454 , 1382.0, 5000*20]
         self.error = [0.0,0.0,0.0]  #errors in each axis
         self.prev_error = [0.0, 0.0, 0.0] #previous errors in each axis
       #  self.max_values = [256, 256, 256, 256]  #max values
@@ -89,7 +89,7 @@ class Edrone():
         rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
       # #  rospy.Subscriber('/pid_tuning_altitude', PidTune, self.altitude_set_pid)
         rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
-        rospy.Subscriber('/pid_tuning_altitude', PidTune, self.throttle_set_pid)
+        # rospy.Subscriber('/pid_tuning_altitude', PidTune, self.throttle_set_pid)
 
         rospy.Subscriber('/edrone/gps', NavSatFix , self.gps_set_pid)
       	
@@ -125,11 +125,11 @@ class Edrone():
         self.Ki[1] = pitch.Ki * 0.008
         self.Kd[1] = pitch.Kd * 0.3
     
-    def throttle_set_pid(self, throttle):
-        self.Kp[2] = throttle.Kp * 0.1  # This is just for an example. You can change the ratio/fraction value accordingly
-        self.Ki[2] = throttle.Ki * 0.008
-        self.Kd[2] = throttle.Kd * 20
-        print(Kp[2],"booo")
+    # def throttle_set_pid(self, throttle):
+    #     self.Kp[2] = throttle.Kp * 0.1  # This is just for an example. You can change the ratio/fraction value accordingly
+    #     self.Ki[2] = throttle.Ki * 0.008
+    #     self.Kd[2] = throttle.Kd * 20
+    #     print(Kp[2],"booo")
 
     def pid(self):
       #   # Converting quaternion to euler angles
