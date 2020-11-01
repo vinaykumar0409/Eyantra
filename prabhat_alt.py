@@ -23,6 +23,7 @@ from std_msgs.msg import Float32
 import rospy
 import time
 import tf
+import math
 
 
 class Edrone():
@@ -40,32 +41,32 @@ class Edrone():
 
         # This is the setpoint that will be received from the drone_command in the range from 1000 to 2000
         # [r_setpoint, p_setpoint, y_setpoint]
-        self.setpoint_cmd = [1500, 1500, 1500]
+        self.setpoint_cmd = [1500.0, 1500.0, 1500.0]
 
         # The setpoint of orientation in euler angles at which you want to stabilize the drone
         # [r_setpoint, p_psetpoint, y_setpoint]
         self.setpoint_euler = [0.0, 0.0, 0.0]
         self.setpoint_throttle = 0
         self.pwm_cmd = prop_speed()
-        self.pwm_cmd.prop1 = 0.0
-        self.pwm_cmd.prop2 = 0.0
-        self.pwm_cmd.prop3 = 0.0
-        self.pwm_cmd.prop4 = 0.0
+        self.pwm_cmd.prop1 = 512.0
+        self.pwm_cmd.prop2 = 512.0
+        self.pwm_cmd.prop3 = 512.0
+        self.pwm_cmd.prop4 = 512.0
 
         # initial setting of Kp, Kd and ki for [roll, pitch, yaw]. eg: self.Kp[2] corresponds to Kp value in yaw axis
         # after tuning and computing corresponding PID parameters, change the parameters
-        self.Kp = [0, 0, 0]
-        self.Ki = [0, 0, 0]
-        self.Kd = [0, 0, 0]
-        self.error = [0,0,0]  #errors in each axis
-        self.prev_error = [0, 0, 0] #previous errors in each axis
+        self.Kp = [5.22, 4, 0.0]
+        self.Ki = [0.0, 0.0, 0.0]
+        self.Kd = [1454 , 1382.0, 0.0]
+        self.error = [0.0,0.0,0.0]  #errors in each axis
+        self.prev_error = [0.0, 0.0, 0.0] #previous errors in each axis
       #  self.max_values = [256, 256, 256, 256]  #max values
       #  self.min_values = [0, 0, 0, 0]              #min values
-        self.out_roll = 0
-        self.out_pitch = 0
-        self.out_yaw = 0
-        self.errSum = [0, 0, 0]
-        self.dErr = [0, 0, 0]
+        self.out_roll = 0.0
+        self.out_pitch = 0.0
+        self.out_yaw = 0.0
+        self.errSum = [0.0, 0.0, 0.0]
+        self.dErr = [0.0, 0.0, 0.0]
         # This is the sample time in which you need to run pid. Choose any time which you seem fit. Remember the stimulation step time is 50 ms
         self.sample_time = 30  # in mseconds
 
@@ -79,9 +80,11 @@ class Edrone():
         rospy.Subscriber('/drone_command', edrone_cmd, self.drone_command_callback)
         rospy.Subscriber('/edrone/imu/data', Imu, self.imu_callback)
         rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
-       # rospy.Subscriber('/pid_tuning_altitude', PidTune, self.altitude_set_pid)
+      #  rospy.Subscriber('/pid_tuning_altitude', PidTune, self.altitude_set_pid)
         rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
         rospy.Subscriber('/pid_tuning_yaw', PidTune, self.yaw_set_pid)
+
+        
 
     # Imu callback function
 
@@ -117,9 +120,16 @@ class Edrone():
 
     def pid(self):
         # Converting quaternion to euler angles
-        (self.drone_orientation_euler[0], self.drone_orientation_euler[1], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion([self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
-
-        # Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll axis
+        (self.drone_orientation_euler[1], self.drone_orientation_euler[0], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion([self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
+       # print(self.drone_orientation_euler[0])
+        self.drone_orientation_euler[0]=math.degrees(self.drone_orientation_euler[0])
+        self.drone_orientation_euler[1]=math.degrees(self.drone_orientation_euler[1])
+        self.drone_orientation_euler[2]=math.degrees(self.drone_orientation_euler[2])
+      #  self.error[0] = 0 - self.drone_orientation_euler[0]
+      #  print(self.error[0])
+      #  self.pwm_pub.publish(self.pwm_cmd)
+        
+      #  Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll axis
         self.setpoint_euler[0] = self.setpoint_cmd[0] * 0.02 - 30
         self.setpoint_euler[1] = self.setpoint_cmd[1] * 0.02 - 30
         self.setpoint_euler[2] = self.setpoint_cmd[2] * 0.02 - 30
@@ -157,16 +167,10 @@ class Edrone():
 
         #print(self.out_roll)
 
-        #Motor mixing algorithm
-       # self.pwm_cmd.prop1 = 512 + self.out_roll - self.out_pitch - self.out_yaw 
-       # self.pwm_cmd.prop2 = 512 - self.out_roll - self.out_pitch + self.out_yaw 
-       # self.pwm_cmd.prop3 = 512 - self.out_roll + self.out_pitch - self.out_yaw 
-       # self.pwm_cmd.prop4 = 512 + self.out_roll + self.out_pitch + self.out_yaw  
-
-        self.pwm_cmd.prop1 = 512 + self.out_roll + self.out_pitch + self.out_yaw 
-        self.pwm_cmd.prop2 = 512 + self.out_roll - self.out_pitch - self.out_yaw 
-        self.pwm_cmd.prop3 = 512 - self.out_roll - self.out_pitch + self.out_yaw 
-        self.pwm_cmd.prop4 = 512 - self.out_roll + self.out_pitch - self.out_yaw 
+        self.pwm_cmd.prop1 = 512 - self.out_roll + self.out_pitch + self.out_yaw 
+        self.pwm_cmd.prop2 = 512 - self.out_roll - self.out_pitch - self.out_yaw 
+        self.pwm_cmd.prop3 = 512 + self.out_roll - self.out_pitch + self.out_yaw 
+        self.pwm_cmd.prop4 = 512 + self.out_roll + self.out_pitch - self.out_yaw 
 
         if self.pwm_cmd.prop1 > 1023:
             self.pwm_cmd.prop1 = 1023
@@ -202,7 +206,7 @@ class Edrone():
         self.pitch_pub.publish(self.error[1])
         self.yaw_pub.publish(self.error[2])
         print(self.Kd[0])
-
+        
 if __name__ == '__main__':
 
     e_drone = Edrone()
