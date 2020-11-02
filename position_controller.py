@@ -3,8 +3,8 @@
 '''
 This python file runs a ROS-node of name attitude_control which controls the roll pitch and yaw angles of the eDrone.
 This node publishes and subsribes the following topics:
-        PUBLICATIONS				SUBSCRIPTIONS
-/edrone/drone_command			/edrone/gps
+        PUBLICATIONS                SUBSCRIPTIONS
+/edrone/drone_command           /edrone/gps
 Rather than using different variables, use list. eg : self.setpoint = [1,2,3], where index corresponds to x,y,z ...rather than defining self.x_setpoint = 1, self.y_setpoint = 2
 CODE MODULARITY AND TECHNIQUES MENTIONED LIKE THIS WILL HELP YOU GAINING MORE MARKS WHILE CODE EVALUATION.
 '''
@@ -57,8 +57,8 @@ class Edrone():
         self.prev_error = [0.0, 0.0, 0.0] #previous errors in each axis
       #  self.max_values = [256, 256, 256, 256]  #max values
       #  self.min_values = [0, 0, 0, 0]              #min values
-        self.fix_lat = 19.000051704
-        self.fix_lon = 72.0001
+        self.fix_lat = 19.0000451704
+        self.fix_lon = 72.0
         self.out_roll = 0.0
         self.out_pitch = 0.0
         self.out_throttle = 0.0
@@ -72,7 +72,7 @@ class Edrone():
         self.lon = 0
 
         self.alt = 0
-        
+        self.loop=0
         # This is the sample time in which you need to run pid. Choose any time which you seem fit. Remember the stimulation step time is 50 ms
         self.sample_time = 30  # in mseconds
 
@@ -89,10 +89,10 @@ class Edrone():
         # rospy.Subscriber('/pid_tuning_altitude', PidTune, self.throttle_set_pid)
 
         rospy.Subscriber('/edrone/gps', NavSatFix , self.gps_set_pid)
-      	
+        
     def gps_set_pid(self,msg):
-    	self.lat=msg.latitude
-    	self.lon=msg.longitude
+        self.lat=msg.latitude
+        self.lon=msg.longitude
     # Imu callback function
 
     # def imu_callback(self, msg):
@@ -147,6 +147,11 @@ class Edrone():
         self.error[0] = (self.fix_lat-self.lat)*100000
         self.error[1] = (self.fix_lon-self.lon)*100000
         print(self.Kp[1],self.error[0],self.error[1])
+
+        if self.loop:
+            if abs(error[1])<0.000004517:
+                self.fix_alt=0.3
+                self.loop=0
       #  self.error[3] = self.setpoint_throttle - self.drone_orientation_euler[2]
         #Compute all the working error variables
         self.errSum[0] = self.errSum[0] + (self.error[0] * self.sample_time)
@@ -164,7 +169,7 @@ class Edrone():
         self.prev_error[0]= self.error[0]
         self.prev_error[1]= self.error[1]
         self.prev_error[2]= self.error[2]
-        print(self.lat,self.lon,self.out_roll)																																																				
+        print(self.lat,self.lon,self.out_roll)                                                                                                                                                                                                              
         if self.out_roll > 2000:
             self.out_roll= 2000
         

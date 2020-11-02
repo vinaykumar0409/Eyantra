@@ -230,7 +230,7 @@ class Edrone():
       #  self.roll_pub.publish(self.error[0])
       #  self.pitch_pub.publish(self.error[1])
         self.alt_pub.publish(self.error[3])
-        print(self.error[3])
+        print("Error is " , self.error[3])
         
 if __name__ == '__main__':
 
