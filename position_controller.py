@@ -58,7 +58,7 @@ class Edrone():
       #  self.max_values = [256, 256, 256, 256]  #max values
       #  self.min_values = [0, 0, 0, 0]              #min values
         self.fix_lat = 19.0000451704
-        self.fix_lon = 72.0
+        self.fix_lon = 72.0001
         self.out_roll = 0.0
         self.out_pitch = 0.0
         self.out_throttle = 0.0
@@ -83,9 +83,9 @@ class Edrone():
         # Subscribing to /drone_command, imu/data, /pid_tuning_roll, /pid_tuning_pitch, /pid_tuning_yaw
       #   rospy.Subscriber('/drone_command', edrone_cmd, self.drone_command_callback)
       #   rospy.Subscriber('/edrone/imu/data', Imu, self.imu_callback)
-        rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
+        # rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
       # #  rospy.Subscriber('/pid_tuning_altitude', PidTune, self.altitude_set_pid)
-        rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
+        # rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
         # rospy.Subscriber('/pid_tuning_altitude', PidTune, self.throttle_set_pid)
 
         rospy.Subscriber('/edrone/gps', NavSatFix , self.gps_set_pid)
@@ -148,10 +148,10 @@ class Edrone():
         self.error[1] = (self.fix_lon-self.lon)*100000
         print(self.Kp[1],self.error[0],self.error[1])
 
-        if self.loop:
-            if abs(error[1])<0.000004517:
-                self.fix_alt=0.3
-                self.loop=0
+        # if self.loop:
+        #     if abs(error[1])<0.000004517:
+        #         self.fix_alt=0.3
+        #         self.loop=0
       #  self.error[3] = self.setpoint_throttle - self.drone_orientation_euler[2]
         #Compute all the working error variables
         self.errSum[0] = self.errSum[0] + (self.error[0] * self.sample_time)
@@ -169,7 +169,7 @@ class Edrone():
         self.prev_error[0]= self.error[0]
         self.prev_error[1]= self.error[1]
         self.prev_error[2]= self.error[2]
-        print(self.lat,self.lon,self.out_roll)                                                                                                                                                                                                              
+        print(self.lat,self.lon,self.out_roll,self.out_pitch)                                                                                                                                                                                                              
         if self.out_roll > 2000:
             self.out_roll= 2000
         
@@ -184,7 +184,7 @@ class Edrone():
         self.drone_cmd.rcYaw = 1500.0
 
         self.drone_cmd.rcRoll=self.out_roll
-        self.drone_cmd.rcPitch=1500.0
+        self.drone_cmd.rcPitch=self.out_pitch
 
         self.drone_pub.publish(self.drone_cmd)
         self.roll_pub.publish(self.error[1])
