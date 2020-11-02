@@ -59,7 +59,7 @@ class Edrone():
       #  self.min_values = [0, 0, 0, 0]              #min values
         self.fix_lat = 19.0
         self.fix_lon = 72.0
-        self.fix_alt=3.0
+        self.fix_alt=  3.0
         self.out_roll = 0.0
         self.out_pitch = 0.0
         self.out_throttle = 0.0
@@ -152,6 +152,15 @@ class Edrone():
         print("Alt error is ", self.error[2])
         print(self.Kp[1],self.error[0],self.error[1])
 
+        
+        if self.loop_for_top==0:
+            if self.loop_for_right:
+                print("came inside")
+                if abs(self.error[0]/100000)<0.000004517:
+                    self.fix_alt=0.3
+                    print("Reached here in right")
+                    self.loop_for_right=0
+        
         if self.loop_for_top:
             print("In top loop")
             if abs(self.error[2]<0.2):
@@ -159,13 +168,6 @@ class Edrone():
                 print("Reached here in top")
                 self.loop_for_top=0
 
-        if self.loop_for_top==0:
-            if self.loop_for_right:
-                print("came inside")
-                if abs(self.error[0]/100000)<0.000004517:
-                    self.fix_alt=0.3
-                    print("Reached here in right")
-                    self.loop=0
       #  self.error[3] = self.setpoint_throttle - self.drone_orientation_euler[2]
         #Compute all the working error variables
         self.errSum[0] = self.errSum[0] + (self.error[0] * self.sample_time)
