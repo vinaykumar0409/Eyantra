@@ -24,39 +24,14 @@ import math
 class Edrone():
     """docstring for Edrone"""
     def __init__(self):
-        rospy.init_node('position_controller')  # initializing ros node with name drone_control
+        rospy.init_node('position_controller')  # initializing ros node with name 
 
-        # This corresponds to your current orientation of eDrone in quaternion format. This value must be updated each time in your imu callback
-        # [x,y,z,w]
-        #self.drone_orientation_quaternion = [0.0, 0.0, 0.0, 0.0]
-
-        # This corresponds to your current orientation of eDrone converted in euler angles form.
-        # [r,p,y]
-        #self.drone_orientation_euler = [0.0, 0.0, 0.0]
-
-        # This is the setpoint that will be received from the drone_command in the range from 1000 to 2000
-        # [r_setpoint, p_setpoint, y_setpoint]
-        #self.setpoint_cmd = [1500.0, 1500.0, 1500.0]
-
-        # The setpoint of orientation in euler angles at which you want to stabilize the drone
-        # [r_setpoint, p_psetpoint, y_setpoint]
-        # self.setpoint_euler = [0.0, 0.0, 0.0]
-        # self.setpoint_throttle = 0
-        # self.pwm_cmd = prop_speed()
-        # self.pwm_cmd.prop1 = 512.0
-        # self.pwm_cmd.prop2 = 512.0
-        # self.pwm_cmd.prop3 = 512.0
-        # self.pwm_cmd.prop4 = 512.0
-
-        # initial setting of Kp, Kd and ki for [roll, pitch, yaw]. eg: self.Kp[2] corressponds to Kp value in yaw axis
-        # after tuning and computing corresponding PID parameters, change the parameters
+        #kp corresponds in order of roll pitch and throttle
         self.Kp = [2860*0.06,1467*0.06, 1.12 ]
         self.Ki = [0.0 , 0.0, 0.000075]
         self.Kd = [5000*100 , 5000*100,1351.5]
         self.error = [0.0,0.0,0.0]  #errors in each axis
         self.prev_error = [0.0, 0.0, 0.0] #previous errors in each axis
-      #  self.max_values = [256, 256, 256, 256]  #max values
-      #  self.min_values = [0, 0, 0, 0]              #min values
         self.fix_lat = 19.0
         self.fix_lon = 72.0
         self.fix_alt=  3.0
@@ -79,8 +54,8 @@ class Edrone():
 
         # Publishing /edrone/pwm, /roll_error, /pitch_error, /yaw_error
         self.drone_pub = rospy.Publisher('/drone_command', edrone_cmd, queue_size=1)
-        self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
-        self.pitch_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
+        #self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
+        #self.pitch_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
         # Subscribing to /drone_command, imu/data, /pid_tuning_roll, /pid_tuning_pitch, /pid_tuning_yaw
       #   rospy.Subscriber('/drone_command', edrone_cmd, self.drone_command_callback)
       #   rospy.Subscriber('/edrone/imu/data', Imu, self.imu_callback)
@@ -95,20 +70,7 @@ class Edrone():
         self.alt=msg.altitude
         self.lat=msg.latitude
         self.lon=msg.longitude
-    # Imu callback function
-
-    # def imu_callback(self, msg):
-
-    #     self.drone_orientation_quaternion[0] = msg.orientation.x
-    #     self.drone_orientation_quaternion[1] = msg.orientation.y
-    #     self.drone_orientation_quaternion[2] = msg.orientation.z
-    #     self.drone_orientation_quaternion[3] = msg.orientation.w
-
-    # def drone_command_callback(self, msg):
-    #     self.setpoint_cmd[0] = msg.rcRoll
-    #     self.setpoint_cmd[1] = msg.rcYaw
-    #     self.setpoint_cmd[2] = msg.rcPitch
-    #     #self.setpoint_cmd[3] = msg.rcThrottle
+ 
 
     # # Callback function for /pid_tuning_roll
     # # This function gets executed each time when /tune_pid publishes /pid_tuning_roll
@@ -126,46 +88,25 @@ class Edrone():
     #     self.Kp[2] = throttle.Kp * 0.1  # This is just for an example. You can change the ratio/fraction value accordingly
     #     self.Ki[2] = throttle.Ki * 0.008
     #     self.Kd[2] = throttle.Kd * 20
-    #     print(Kp[2],"booo")
+    #     print(Kp[2],"abc")
 
     def pid(self):
-      #   # Converting quaternion to euler angles
-      #   (self.drone_orientation_euler[1], self.drone_orientation_euler[0], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion([self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
-      #  # print(self.drone_orientation_euler[0])
-      #   self.drone_orientation_euler[0]=math.degrees(self.drone_orientation_euler[0])
-      #   self.drone_orientation_euler[1]=math.degrees(self.drone_orientation_euler[1])
-      #   self.drone_orientation_euler[2]=math.degrees(self.drone_orientation_euler[2])
-      # #  self.error[0] = 0 - self.drone_orientation_euler[0]
-      # #  print(self.error[0])
-      # #  self.pwm_pub.publish(self.pwm_cmd)
-        
-      # #  Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll axis
-      #   self.setpoint_euler[0] = self.setpoint_cmd[0] * 0.02 - 30
-      #   self.setpoint_euler[1] = self.setpoint_cmd[1] * 0.02 - 30
-      #   self.setpoint_euler[2] = self.setpoint_cmd[2] * 0.02 - 30
-
-        #self.setpoint_throttle = self.setpoint_cmd[3] * 1.024 - 1024
-
         self.error[0] = (self.fix_lat-self.lat)*100000
         self.error[1] = (self.fix_lon-self.lon)*100000
         self.error[2] = self.fix_alt - self.alt
-        print("Alt error is ", self.error[2])
-        print(self.Kp[1],self.error[0],self.error[1])
+        #print("Alt error is ", self.error[2])
+        #print(self.Kp[1],self.error[0],self.error[1])
 
-        
+
         if self.loop_for_top==0:
             if self.loop_for_right:
-                print("came inside")
-                if abs(self.error[0]/100000)<0.000004517:
+                if abs(self.error[0]/100000)<0.000002500:
                     self.fix_alt=0.3
-                    print("Reached here in right")
                     self.loop_for_right=0
         
         if self.loop_for_top:
-            print("In top loop")
             if abs(self.error[2]<0.2):
                 self.fix_lat=19.0000451704
-                print("Reached here in top")
                 self.loop_for_top=0
 
       #  self.error[3] = self.setpoint_throttle - self.drone_orientation_euler[2]
@@ -189,7 +130,7 @@ class Edrone():
         self.prev_error[1]= self.error[1]
         self.prev_error[2]= self.error[2]
 
-        print(self.lat,self.lon,self.out_roll)                                                                                                                                                                                                              
+        #print(self.lat,self.lon,self.out_roll)                                                                                                                                                                                                              
         
         if self.out_roll > 2000:
             self.out_roll= 2000
@@ -206,18 +147,15 @@ class Edrone():
         if self.out_pitch < 1000:
             self.out_pitch = 1000
 
-        # if self.out_throttle < 1000:
-        #     self.out_throttle = 1000
-
         self.drone_cmd.rcYaw = 1500.0
         self.drone_cmd.rcRoll=self.out_roll
-        self.drone_cmd.rcPitch=1500.0
+        self.drone_cmd.rcPitch=self.out_pitch
         self.drone_cmd.rcThrottle=self.out_throttle
-        print("Latest throttle is ",self.out_throttle)
+        #print("Latest throttle is ",self.out_throttle)
         
         self.drone_pub.publish(self.drone_cmd)
-        self.roll_pub.publish(self.error[1])
-        self.pitch_pub.publish(self.error[0])
+        #self.roll_pub.publish(self.error[1])
+        #self.pitch_pub.publish(self.error[0])
         
 if __name__ == '__main__':
 

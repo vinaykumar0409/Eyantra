@@ -102,7 +102,7 @@ class Edrone():
     def drone_command_callback(self, msg):
         self.setpoint_cmd[0] = msg.rcRoll
         self.setpoint_cmd[2] = msg.rcYaw
-        print("Yaw here is ",self.setpoint_cmd[2])
+        #print("Yaw here is ",self.setpoint_cmd[2])
         self.setpoint_cmd[1] = msg.rcPitch
         #self.setpoint_cmd[3] = msg.rcThrottle
         self.out_throttle = msg.rcThrottle
@@ -191,9 +191,9 @@ class Edrone():
         self.prev_error[2]= self.error[2]
         self.prev_error[3]= self.error[3]
 
-        #--jash  self.setpoint_cmd[3]=self.out_throttle
+        #-- self.setpoint_cmd[3]=self.out_throttle
         self.out_base =  400 + self.out_throttle*100
-        print("Hey",self.out_base)
+       # print("Hey",self.out_base)
         self.pwm_cmd.prop1 = self.out_base - self.out_roll + self.out_pitch - self.out_yaw 
         self.pwm_cmd.prop2 = self.out_base - self.out_roll - self.out_pitch + self.out_yaw 
         self.pwm_cmd.prop3 = self.out_base + self.out_roll - self.out_pitch - self.out_yaw 
@@ -232,7 +232,7 @@ class Edrone():
       #  self.roll_pub.publish(self.error[0])
       #  self.pitch_pub.publish(self.error[1])
         #self.alt_pub.publish(self.error[3])
-        print(self.error[3])
+        #print(self.error[3])
         
 if __name__ == '__main__':
 
