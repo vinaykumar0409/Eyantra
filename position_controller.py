@@ -58,7 +58,7 @@ class Edrone():
       #  self.max_values = [256, 256, 256, 256]  #max values
       #  self.min_values = [0, 0, 0, 0]              #min values
         self.fix_lat = 19.00000451704
-        self.fix_lon = 0.0
+        self.fix_lon = 72.0001
         self.out_roll = 0.0
         self.out_pitch = 0.0
         self.out_throttle = 0.0
@@ -116,9 +116,9 @@ class Edrone():
         self.Kd[1] = roll.Kd * 0.3
     
     def pitch_set_pid(self, pitch):
-        self.Kp[0] = pitch.Kp * 6  # This is just for an example. You can change the ratio/fraction value accordingly
-        self.Ki[0] = pitch.Ki * 0.01
-        self.Kd[0] = pitch.Kd * 6
+        self.Kp[0] = pitch.Kp * 500  # This is just for an example. You can change the ratio/fraction value accordingly
+        self.Ki[0] = pitch.Ki * 0.008
+        self.Kd[0] = pitch.Kd * 1000
     
     # def throttle_set_pid(self, throttle):
     #     self.Kp[2] = throttle.Kp * 0.1  # This is just for an example. You can change the ratio/fraction value accordingly
@@ -145,8 +145,8 @@ class Edrone():
         #self.setpoint_throttle = self.setpoint_cmd[3] * 1.024 - 1024
 
         self.error[0] = self.fix_lat-self.lat
-        self.error[1] = self.fix_lon-self.lon
-        print(self.Kp[0])
+        self.error[1] = (self.fix_lon-self.lon)*10
+        print(self.Kp[0],self.error[0],self.error[1])
       #  self.error[3] = self.setpoint_throttle - self.drone_orientation_euler[2]
         #Compute all the working error variables
         self.errSum[0] = self.errSum[0] + (self.error[0] * self.sample_time)
@@ -158,9 +158,9 @@ class Edrone():
         self.errSum[2] = self.errSum[2] + (self.error[2] * self.sample_time)
         self.dErr[2] = (self.error[2] - self.prev_error[2]) / self.sample_time
 
-        self.out_pitch = 1500 + self.Kp[0] * self.prev_error[0] + self.Ki[0] * self.errSum[0] + self.Kd[0] * self.dErr[0]
+        self.out_pitch = 1500 + (self.Kp[0] * self.error[1] + self.Ki[0] * self.errSum[1] + self.Kd[0] * self.dErr[1])
         
-        self.out_roll =1500 +  self.Kp[1] * self.prev_error[1] + self.Ki[1] * self.errSum[1] + self.Kd[1] * self.dErr[1]
+        self.out_roll =1500 +  self.Kp[1] * self.error[1] + self.Ki[1] * self.errSum[1] + self.Kd[1] * self.dErr[1]
         self.prev_error[0]= self.error[0]
         self.prev_error[1]= self.error[1]
         self.prev_error[2]= self.error[2]
@@ -176,7 +176,7 @@ class Edrone():
         
         if self.out_pitch < 1000:
             self.out_pitch = 1000
-       
+        self.drone_cmd.rcYaw = 1500.0
 
         self.drone_cmd.rcRoll=1500.0
         self.drone_cmd.rcPitch=self.out_pitch
