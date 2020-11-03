@@ -9,7 +9,6 @@ This node publishes and subsribes the following topics:
         /yaw_error              /pid_tuning_roll
         /edrone/pwm             /edrone/imu/data
                                 /edrone/drone_command
-
 Rather than using different variables, use list. eg : self.setpoint = [1,2,3], where index corresponds to x,y,z ...rather than defining self.x_setpoint = 1, self.y_setpoint = 2
 CODE MODULARITY AND TECHNIQUES MENTIONED LIKE THIS WILL HELP YOU GAINING MORE MARKS WHILE CODE EVALUATION.
 '''
@@ -57,9 +56,9 @@ class Edrone():
 
         # initial setting of Kp, Kd and ki for [roll, pitch, yaw]. eg: self.Kp[2] corresponds to Kp value in yaw axis
         # after tuning and computing corresponding PID parameters, change the parameters
-        self.Kp = [5.22, 4, 200.0, 1.12]
-        self.Ki = [0.0, 0.0, 0.0, 0.000025]
-        self.Kd = [1454 , 1382.0, 3000.0, 1351.5]
+        self.Kp = [5.22, 4, 200.0, 0.54]
+        self.Ki = [0.0, 0.0, 0.0, 0.000024]
+        self.Kd = [1454 , 1382.0, 3000.0, 879.0]
         self.error = [0.0, 0.0, 0.0, 0.0]  #errors in each axis
         self.prev_error = [0.0, 0.0, 0.0, 0.0] #previous errors in each axis
       #  self.max_values = [256, 256, 256, 256]  #max values
@@ -79,16 +78,18 @@ class Edrone():
       #  self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
        # self.pitch_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
        # self.yaw_pub = rospy.Publisher('/yaw_error', Float32, queue_size=1)
-        self.alt_pub = rospy.Publisher('/z_error', Float32, queue_size=1)
+        self.alt_pub = rospy.Publisher('/alt_error', Float32, queue_size=1)
+        self.z_pub = rospy.Publisher('/z_mark', Float32, queue_size=1)
+
 
         # Subscribing to /drone_command, imu/data, /pid_tuning_roll, /pid_tuning_pitch, /pid_tuning_yaw
         rospy.Subscriber('/drone_command', edrone_cmd, self.drone_command_callback)
         rospy.Subscriber('/edrone/imu/data', Imu, self.imu_callback)
-        rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
+        #rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
         rospy.Subscriber('/edrone/gps', NavSatFix , self.gps_set_pid)
         rospy.Subscriber('/pid_tuning_altitude', PidTune, self.altitude_set_pid)
-        rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
-        rospy.Subscriber('/pid_tuning_yaw', PidTune, self.yaw_set_pid)
+        # rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
+        # rospy.Subscriber('/pid_tuning_yaw', PidTune, self.yaw_set_pid)
 
 
     # Imu callback function
@@ -125,15 +126,15 @@ class Edrone():
     
     def altitude_set_pid(self, altitude):
         self.Kp[3] = altitude.Kp * 0.06  # This is just for an example. You can change the ratio/fraction value accordingly
-        self.Ki[3] = altitude.Ki * 0.000002
+        self.Ki[3] = altitude.Ki * 0.00000001
         self.Kd[3] = altitude.Kd * 0.3
        # print("booo")
     
     def gps_set_pid(self,msg):
-    #	self.lat=msg.latitude
-    #	self.lon=msg.longitude
-    	self.alt=msg.altitude
-        #	print(self.alt)
+    #   self.lat=msg.latitude
+    #   self.lon=msg.longitude
+        self.alt=msg.altitude
+        #   print(self.alt)
 
     def pid(self):
         # Converting quaternion to euler angles
@@ -168,7 +169,7 @@ class Edrone():
         self.errSum[2] = self.errSum[2] + (self.error[2] * self.sample_time)
         self.dErr[2] = (self.error[2] - self.prev_error[2]) / self.sample_time
 
-        self.errSum[3] = self.errSum[3] + (self.error[3] * self.sample_time)
+        
         self.dErr[3] = (self.error[3] - self.prev_error[3]) / self.sample_time
 
         #Compute PID Output
@@ -178,10 +179,10 @@ class Edrone():
   
         self.out_yaw = self.Kp[2] * self.error[2] + self.Ki[2] * self.errSum[2] + self.Kd[2] * self.dErr[2]
 
-      #  if self.error[3] > 4:
-      #      self.Ki[3] = 0
-       # else:
-       #     pass
+        if abs(self.error[3]) < 2:
+            self.errSum[3] = self.errSum[3] + (self.error[3] * self.sample_time)
+           # print(self.error[3])
+
         self.out_throttle = self.Kp[3] * self.error[3] + self.Ki[3] * self.errSum[3] + self.Kd[3] * self.dErr[3]
 
         #Remember some variables for next time
@@ -190,7 +191,7 @@ class Edrone():
         self.prev_error[2]= self.error[2]
         self.prev_error[3]= self.error[3]
 
-        self.out_base =  400 + self.out_throttle*100
+        self.out_base =  500 + self.out_throttle*100
         
         self.pwm_cmd.prop1 = self.out_base - self.out_roll + self.out_pitch - self.out_yaw 
         self.pwm_cmd.prop2 = self.out_base - self.out_roll - self.out_pitch + self.out_yaw 
@@ -230,7 +231,8 @@ class Edrone():
       #  self.roll_pub.publish(self.error[0])
       #  self.pitch_pub.publish(self.error[1])
         self.alt_pub.publish(self.error[3])
-        print("Error is " , self.error[3])
+        self.z_pub.publish(0)
+        print(self.error[3])
         
 if __name__ == '__main__':
 
